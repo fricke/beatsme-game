@@ -1,0 +1,89 @@
+<link rel="import" href="../core-ajax/core-ajax.html">
+<link rel="import" href="../core-animated-pages/core-animated-pages.html">
+<link rel="import" href="../beatsme-game-card/beatsme-game-card.html">
+
+  <polymer-element name="beatsme-game" attributes="userId clientId gamers">
+
+  <template>
+    <link href="./beatsme-game.css" rel="stylesheet">
+
+    <core-ajax
+      id="gameCards",
+      auto url="/game/cards"
+      handleAs="json"
+      on-core-response="{{ handleCardsResponse }}">
+    </core-ajax>
+
+    <core-ajax
+      id="gamePoints"
+      url="/game/points"
+      handleAs="json"
+      method="PUT"
+      on-core-response="{{ handleUpdatePoints }}">
+    </core-ajax>
+
+    <core-ajax
+      id="getGame"
+      url="/game"
+      handleAs="json"
+      on-core-response="{{ handleGetResponse }}">
+    </core-ajax>
+
+
+    <core-ajax
+      id="gameGuess"
+      url="/game/guess/",
+      handleAs="json"
+      on-core-response="{{ handleGuessResponse }}">
+    </core-ajax>
+
+    <core-animated-pages transitions="hero-transition" on-core-animated-pages-transition-end="{{complete}}">
+      <section>
+
+        <div class="chip-container" hero-p on-tap="{{transition}}">
+
+          <template repeat="{{cards as card}}">
+            <beatsme-game-card on-click="{{ handleCardClick }}" trackId="{{ card.id }}" clientId="{{ clientId }}"></beatsme-game-card>
+          </template>
+
+        </div>
+      </section>
+    </core-animated-pages>
+
+    <beatsme-player
+      trackId="{{ winningId }}"
+      userId="{{ userId }}"
+      clientId="{{ clientId }}">
+    </beatsme-player>
+
+  </template>
+  <script>
+
+    Polymer('beatsme-game', {
+      cards: [],
+      handleCardClick: function(event) {
+        this.fire('beatsme-card-clicked', { trackId: event.srcElement.track.id });
+        this.winningId = event.srcElement.track.id;
+        // ajax.params = { guessId: event.srcElement.track.id };
+        // ajax.go();
+      },
+      handleGuessResponse: function(event, response) {
+        var responseMsg = response.response.data;
+        var ajax = this.shadowRoot.querySelectorAll('core-ajax#gamePoints')[0];
+        ajax.params = { 'action': responseMsg == 'success' ? 'increase' : 'decrease'};
+        ajax.go();
+      },
+      handleUpdatePoints: function(event, reesponse) {
+        var data = response
+      },
+      handleCardsResponse: function(event, response) {
+        var data = response.response.data;
+        this.cards = data.cards;
+        this.winningId = data.winningId;
+      }
+    });
+
+  </script>
+  </polymer-element>
+
+  <div class="green"></div>
