@@ -1,89 +1,97 @@
 <link rel="import" href="../core-ajax/core-ajax.html">
+<link rel="import" href="../core-signals/core-signals.html">
 <link rel="import" href="../core-animated-pages/core-animated-pages.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
 <link rel="import" href="../beatsme-game-card/beatsme-game-card.html">
+<link rel="import" href="../core-icons/core-icons.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
 
-  <polymer-element name="beatsme-game" attributes="userId clientId gamers">
+  <polymer-element name="beatsme-game" attributes="userId gameId clientId accessToken hand winningId">
 
   <template>
     <link href="./beatsme-game.css" rel="stylesheet">
 
     <core-ajax
-      id="gameCards",
-      auto url="/game/cards"
+      id="startGame"
+      url="/games"
+      method="POST"
       handleAs="json"
-      on-core-response="{{ handleCardsResponse }}">
-    </core-ajax>
-
-    <core-ajax
-      id="gamePoints"
-      url="/game/points"
-      handleAs="json"
-      method="PUT"
-      on-core-response="{{ handleUpdatePoints }}">
+      on-core-response="{{ handleGameResponse }}">
     </core-ajax>
 
     <core-ajax
       id="getGame"
-      url="/game"
+      url="/game/{{ gameId }}"
       handleAs="json"
-      on-core-response="{{ handleGetResponse }}">
+      on-core-response="{{ handleGameResponse }}">
     </core-ajax>
-
 
     <core-ajax
-      id="gameGuess"
-      url="/game/guess/",
+      id="getHand"
+      url="/game/{{ game.id }}/hand"
       handleAs="json"
-      on-core-response="{{ handleGuessResponse }}">
+      on-core-response="{{ handleNewHandResponse }}">
     </core-ajax>
 
-    <core-animated-pages transitions="hero-transition" on-core-animated-pages-transition-end="{{complete}}">
-      <section>
+    <core-ajax
+      id="updatePoints"
+      url="/game/{{ game.id }}/points"
+      handleAs="json"
+      method="PUT"
+      params='{"timeSelected": "{{ timeSelected }}", "numGuesses": "{{ numGuesses }}", "userId": "{{ currentPlayer.id }}", "skipped": {{ skipped }}, "timeout": {{ timeout }}}'
+      on-core-response="{{ handleUpdatePoints }}">
+    </core-ajax>
 
-        <div class="chip-container" hero-p on-tap="{{transition}}">
+    <div id="gameContainer">
+      <core-animated-pages selected="{{page}}" transitions="hero-transition" on-core-animated-pages-transition-end="{{complete}}">
+        <section id="cards-sections">
+          <div class="card-container" hero-p on-tap="{{ cardGuess }}">
+            <h1 id="gameStartCountdown"></h1>
+            <template repeat="{{hand as card}}">
+              <beatsme-game-card
+                id="card_{{ card.id }}"
+                on-card-loaded="{{ handleCardLoaded }}"
+                trackId="{{ card.id }}">
+              </beatsme-game-card>
+            </template>
+          </div>
+        </section>
+        <section id="fullCardSection">
+          <div class="full-card" layout horizontal hero-id="{{ winningId }}" hero >
+            <div class="full-card-left" style="background: url('{{ winningCard.album.cover }}/default?client_id={{ clientId }}') no-repeat;" hero-id="{{ winningId }}-art" hero></div>
+            <div class="full-card-right" flex>
+              <div layout horizontal center>
+                <div flex>
+                  <div class="full-card-album-title">{{winningCard.album.display}}</div>
+                  <div class="full-card-album-artist">{{winningCard.track.artist_display_name}}</div>
+                  <div class="full-card-album-artist">{{winningCard.track.title}}</div>
+                </div>
+              </div>
+              <div class="player" id="winningPlayer">
+                <paper-progress id="winningTimeline"></paper-progress>
+              </div>
+            </div>
+          </div>
+        </section>
+      </core-animated-pages>
+      <paper-fab hidden on-click="{{ pickNewCards }}" icon="arrow-forward"></paper-fab>
+    </div>
 
-          <template repeat="{{cards as card}}">
-            <beatsme-game-card on-click="{{ handleCardClick }}" trackId="{{ card.id }}" clientId="{{ clientId }}"></beatsme-game-card>
-          </template>
-
-        </div>
-      </section>
-    </core-animated-pages>
+    <div id="gameStats">
+      <h3>Score:
+        <span id="currentPoints"></span>
+        <span id="currentAdd"></span>
+      </h3>
+    </div>
 
     <beatsme-player
       trackId="{{ winningId }}"
-      userId="{{ userId }}"
-      clientId="{{ clientId }}">
+      externalController="{{ externalController }}"
+      on-clip-ended="{{ handleHandEnded }}">
     </beatsme-player>
 
   </template>
-  <script>
-
-    Polymer('beatsme-game', {
-      cards: [],
-      handleCardClick: function(event) {
-        this.fire('beatsme-card-clicked', { trackId: event.srcElement.track.id });
-        this.winningId = event.srcElement.track.id;
-        // ajax.params = { guessId: event.srcElement.track.id };
-        // ajax.go();
-      },
-      handleGuessResponse: function(event, response) {
-        var responseMsg = response.response.data;
-        var ajax = this.shadowRoot.querySelectorAll('core-ajax#gamePoints')[0];
-        ajax.params = { 'action': responseMsg == 'success' ? 'increase' : 'decrease'};
-        ajax.go();
-      },
-      handleUpdatePoints: function(event, reesponse) {
-        var data = response
-      },
-      handleCardsResponse: function(event, response) {
-        var data = response.response.data;
-        this.cards = data.cards;
-        this.winningId = data.winningId;
-      }
-    });
-
-  </script>
+  <script src="./beatsme-game.js"></script>
   </polymer-element>
 
   <div class="green"></div>
