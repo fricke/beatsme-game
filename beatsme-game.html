@@ -3,6 +3,7 @@
 <link rel="import" href="../core-animated-pages/core-animated-pages.html">
 <link rel="import" href="../paper-progress/paper-progress.html">
 <link rel="import" href="../beatsme-game-card/beatsme-game-card.html">
+<link rel="import" href="../beatsme-player/beatsme-player.html">
 <link rel="import" href="../core-icons/core-icons.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
 
@@ -87,7 +88,8 @@
     <beatsme-player
       trackId="{{ winningId }}"
       externalController="{{ externalController }}"
-      on-clip-ended="{{ handleHandEnded }}">
+      on-clip-ended="{{ handleHandEnded }}"
+      on-track-ended="{{ pickNewCards }}">
     </beatsme-player>
 
   </template>

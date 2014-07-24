@@ -12,9 +12,10 @@ Polymer('beatsme-game', {
   numGuesses: 0,
   timeSelected: 0,
   pickedWinner: false,
+  handOver: false,
   skipped: false,
   timeout: false,
-  ready: function(){
+  domReady: function(){
     if(this.gameId) {
         var ajax = this.shadowRoot.querySelector('core-ajax#getGame');
         ajax.go();
@@ -34,11 +35,13 @@ Polymer('beatsme-game', {
     this.numGuesses = 0;
     this.timeSelected = 0;
     this.pickedWinner = false;
+    this.handOver = false;
     this.timeout = false;
     this.skipped = false;
   },
   pickNewCards: function(){
-    if(!this.pickedWinner) {
+    if(!this.pickedWinner && !this.handOver) {
+      this.skipped = true;
       this.updateScore();
     }
     this.reset();
@@ -66,8 +69,10 @@ Polymer('beatsme-game', {
     this.hand = newHand.cards;
   },
   handleHandEnded: function() {
+    this.handOver = true;
     if(!this.pickedWinner) {
         this.page = 1;
+        this.timeout = true;
         this.updateScore();
         this.player.setProgressRed();
     }
